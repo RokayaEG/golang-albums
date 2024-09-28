@@ -3,9 +3,10 @@ package main
 import (
 	"database/sql"
 	"net/http"
-	_"github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
+
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 )
 
 type album struct {
@@ -26,15 +27,14 @@ func main() {
 	// Initialize a mysql database connection
 	db, err = sqlx.Connect("mysql", dsn)
 	if err != nil {
-	 panic("Failed to connect to the database: " + err.Error())
+		panic("Failed to connect to the database: " + err.Error())
 	}
-   
+
 	// Verify the connection to the database is still alive
 	err = db.Ping()
 	if err != nil {
-	 panic("Failed to ping the database: " + err.Error())
+		panic("Failed to ping the database: " + err.Error())
 	}
-
 
 	router := gin.Default()
 
@@ -47,12 +47,6 @@ func main() {
 	}
 
 	router.Run(":8080")
-}
-
-var albums = map[string]album{
-	"1": {ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 50.00},
-	"2": {ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-	"3": {ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
 }
 
 func getAlbums(c *gin.Context) {
@@ -106,11 +100,10 @@ func getAlbumById(c *gin.Context) {
 		if err == sql.ErrNoRows {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found"})
 			return
-		 }
+		}
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
 		return
 	}
 
-	
 	c.IndentedJSON(http.StatusOK, album)
 }
