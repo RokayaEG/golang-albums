@@ -40,6 +40,7 @@ func main() {
 
 	albums := router.Group("/album")
 	{
+		albums.PUT("/:id", updateAlbumById)
 		albums.GET("/", getAlbums)
 		albums.GET("/:id", getAlbumById)
 		albums.POST("/", createAlbums)
@@ -106,4 +107,45 @@ func getAlbumById(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, album)
+}
+
+func updateAlbumById(c *gin.Context) {
+	id := c.Param("id")
+	var alb album
+
+	err = db.Get(&alb, "SELECT id, title, artist, price FROM albums where id = ?", id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found"})
+			return
+		}
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	if err := c.BindJSON(&alb); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	_, err = db.Query("UPDATE albums SET title = ?, artist = ?, price = ? WHERE id = ?", alb.Title, alb.Artist, alb.Price, id)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	var updatedAlbum album
+	err = db.Get(&updatedAlbum, "SELECT id, title, artist, price FROM albums where id = ?", id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Album not found"})
+			return
+		}
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, updatedAlbum)
+
 }
